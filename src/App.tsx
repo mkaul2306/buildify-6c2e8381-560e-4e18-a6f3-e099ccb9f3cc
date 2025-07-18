@@ -1,27 +1,43 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
+import { ThemeProvider } from './components/theme-provider';
+import Dashboard from './pages/Dashboard';
+import AttachmentAnalytics from './pages/AttachmentAnalytics';
+import UserActivity from './pages/UserActivity';
+import StorageMetrics from './pages/StorageMetrics';
+import Layout from './components/Layout';
+import './App.css';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
+function App() {
+  return (
+    <ThemeProvider defaultTheme="light" storageKey="analytics-theme">
+      <QueryClientProvider client={queryClient}>
+        <Router>
+          <Toaster position="top-right" />
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="attachments" element={<AttachmentAnalytics />} />
+              <Route path="user-activity" element={<UserActivity />} />
+              <Route path="storage" element={<StorageMetrics />} />
+            </Route>
+          </Routes>
+        </Router>
+      </QueryClientProvider>
+    </ThemeProvider>
+  );
+}
 
 export default App;
