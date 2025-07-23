@@ -6,7 +6,7 @@ import { DateRange } from 'react-day-picker';
 import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Calendar } from './ui/Calendar';
-import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
+import { Popover } from './ui/Popover';
 
 interface DateRangePickerProps {
   dateRange: DateRange | undefined;
@@ -22,7 +22,7 @@ export function DateRangePicker({
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
-        <PopoverTrigger asChild>
+        <Popover.Trigger asChild>
           <Button
             id="date"
             variant="outline"
@@ -45,8 +45,8 @@ export function DateRangePicker({
               <span>Pick a date range</span>
             )}
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        </Popover.Trigger>
+        <Popover.Content className="w-auto p-0" align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -55,7 +55,7 @@ export function DateRangePicker({
             onSelect={onDateRangeChange}
             numberOfMonths={2}
           />
-        </PopoverContent>
+        </Popover.Content>
       </Popover>
     </div>
   );
