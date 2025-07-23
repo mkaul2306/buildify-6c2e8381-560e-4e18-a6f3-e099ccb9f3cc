@@ -153,8 +153,6 @@ export async function fetchStartupCheckIns(
   toDate?: Date
 ) {
   // Get the startup from the search results
-  // The startupId parameter is actually the index from the searchResults array
-  // which contains the actual startup name
   const { data: startups } = await supabase
     .from('StartupCheckIns')
     .select('StartupName')
@@ -223,11 +221,21 @@ export async function fetchStartupCheckIns(
 
   console.log('Raw check-in data:', data); // Debug log
 
-  // Transform the data to the format expected by the chart
-  return data.map(item => ({
-    date: format(new Date(item.CheckInTime), 'yyyy-MM-dd'),
-    status: item.CheckInType?.toString() || 'Unknown',
-    notes: item.LastWorkedOn || ''
+  // Count check-ins by date for the chart
+  const checkInsByDate: Record<string, number> = {};
+  
+  data.forEach(item => {
+    const date = format(new Date(item.CheckInTime), 'yyyy-MM-dd');
+    if (!checkInsByDate[date]) {
+      checkInsByDate[date] = 0;
+    }
+    checkInsByDate[date] += 1;
+  });
+  
+  // Convert to array format for the chart
+  return Object.entries(checkInsByDate).map(([date, count]) => ({
+    date,
+    count
   }));
 }
 

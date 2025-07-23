@@ -83,27 +83,9 @@ export function Dashboard() {
       
       console.log('Fetched check-ins:', checkIns); // Debug log
       
-      // Transform check-ins data for the chart
-      const checkInCounts = checkIns.reduce((acc: Record<string, number>, checkIn) => {
-        const date = checkIn.date;
-        if (!acc[date]) {
-          acc[date] = 0;
-        }
-        acc[date] += 1;
-        return acc;
-      }, {});
-      
-      // Convert to chart data points
-      const chartData = Object.entries(checkInCounts).map(([date, count]) => ({
-        date,
-        value: count
-      }));
-      
-      console.log('Chart data before aggregation:', chartData); // Debug log
-      
       // Aggregate based on selected granularity
       const aggregatedData = aggregateDataByGranularity(
-        chartData.map(item => ({ date: item.date, count: item.value })),
+        checkIns,
         granularity,
         'count'
       );
