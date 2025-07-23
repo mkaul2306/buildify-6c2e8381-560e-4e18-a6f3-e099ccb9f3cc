@@ -1,43 +1,19 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { ThemeProvider } from './components/theme-provider';
-import Dashboard from './pages/Dashboard';
-import AttachmentAnalytics from './pages/AttachmentAnalytics';
-import UserActivity from './pages/UserActivity';
-import StorageMetrics from './pages/StorageMetrics';
-import Layout from './components/Layout';
-import './App.css';
-
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: 1,
-    },
-  },
-});
+import React from 'react'
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="analytics-theme">
-      <QueryClientProvider client={queryClient}>
-        <Router>
-          <Toaster position="top-right" />
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="attachments" element={<AttachmentAnalytics />} />
-              <Route path="user-activity" element={<UserActivity />} />
-              <Route path="storage" element={<StorageMetrics />} />
-            </Route>
-          </Routes>
-        </Router>
-      </QueryClientProvider>
-    </ThemeProvider>
-  );
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <h1 className="text-3xl font-bold text-gray-800">
+          Clean Project
+        </h1>
+        <p className="mt-2 text-gray-600">
+          All previous code has been removed.
+        </p>
+      </div>
+    </div>
+  )
 }
 
-export default App;
+export default App
