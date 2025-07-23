@@ -149,4 +149,4 @@ export function Dashboard() {
                   : '0'}
               </p>
               <p className="text-sm text-muted-foreground mt-1">
-                Last {granularity === 'daily' ? 'day' : granularity === 'monthly
+                Last {granularity === 'daily' ? 'day' : granularity === 'monthly' ? 'month' : 'year'}
