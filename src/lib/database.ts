@@ -82,7 +82,7 @@ export async function fetchStartupCheckIns(
   toDate?: Date
 ) {
   let query = supabase
-    .from('check_ins')
+    .from('check_ins_view')  // Use the view instead of the table
     .select('*')
     .eq('startup_id', startupId)
     .order('check_in_date', { ascending: true });
@@ -102,8 +102,10 @@ export async function fetchStartupCheckIns(
     return [];
   }
 
+  console.log('Raw check-in data:', data); // Debug log
+
   return data.map(item => ({
-    date: item.check_in_date,
+    date: item.check_in_date,  // This should now be in YYYY-MM-DD format
     status: item.status,
     notes: item.notes
   }));
@@ -212,6 +214,14 @@ export function aggregateDataByGranularity(
   granularity: 'daily' | 'monthly' | 'yearly',
   valueField: string
 ): ChartDataPoint[] {
+  if (!data || data.length === 0) {
+    console.log('No data to aggregate');
+    return [];
+  }
+
+  console.log('Aggregating data with granularity:', granularity);
+  console.log('Sample data item:', data[0]);
+
   if (granularity === 'daily') {
     return data.map(item => ({
       date: item.date,
@@ -222,20 +232,33 @@ export function aggregateDataByGranularity(
   const aggregated: Record<string, number> = {};
   
   data.forEach(item => {
-    const date = parseISO(item.date);
-    let key: string;
-    
-    if (granularity === 'monthly') {
-      key = format(date, 'yyyy-MM');
-    } else { // yearly
-      key = format(date, 'yyyy');
+    try {
+      // Handle different date formats
+      let date;
+      if (item.date.includes('T') || item.date.includes(' ')) {
+        // If it's a full timestamp, parse it
+        date = parseISO(item.date);
+      } else {
+        // If it's just a date (YYYY-MM-DD), parse it
+        date = parseISO(item.date);
+      }
+      
+      let key: string;
+      
+      if (granularity === 'monthly') {
+        key = format(date, 'yyyy-MM');
+      } else { // yearly
+        key = format(date, 'yyyy');
+      }
+      
+      if (!aggregated[key]) {
+        aggregated[key] = 0;
+      }
+      
+      aggregated[key] += (item[valueField] || 0);
+    } catch (err) {
+      console.error('Error aggregating data for item:', item, err);
     }
-    
-    if (!aggregated[key]) {
-      aggregated[key] = 0;
-    }
-    
-    aggregated[key] += (item[valueField] || 0);
   });
   
   return Object.entries(aggregated).map(([key, value]) => {
