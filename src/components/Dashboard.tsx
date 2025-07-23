@@ -13,7 +13,10 @@ import {
   fetchFileTypeDistribution,
   aggregateDataByGranularity, 
   ChartDataPoint,
-  FileTypeDistribution
+  FileTypeDistribution,
+  searchStartups,
+  Startup,
+  fetchStartupCheckIns
 } from '../lib/database';
 
 export function Dashboard() {
@@ -25,6 +28,13 @@ export function Dashboard() {
     from: subMonths(new Date(), 6),
     to: new Date()
   });
+
+  // Search state
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchResults, setSearchResults] = useState<Startup[]>([]);
+  const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
+  const [startupCheckIns, setStartupCheckIns] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Data states
   const [isLoading, setIsLoading] = useState(true);

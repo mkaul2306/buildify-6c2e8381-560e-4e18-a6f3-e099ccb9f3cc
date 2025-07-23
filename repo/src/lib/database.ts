@@ -110,19 +110,54 @@ export async function fetchStartupCheckIns(
 }
 
 // Fetch attachments with optional filtering
-export async function fetchAttachments(limit = 100, offset = 0) {
-  const { data, error } = await supabase
+export async function fetchAttachments(
+  limit = 100, 
+  offset = 0, 
+  searchTerm?: string,
+  fileType?: string,
+  fromDate?: Date,
+  toDate?: Date
+) {
+  let query = supabase
     .from('attachments')
-    .select('*')
+    .select('*');
+
+  // Apply filters if provided
+  if (searchTerm && searchTerm.trim() !== '') {
+    query = query.or(`file_name.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+  }
+
+  if (fileType && fileType !== 'all') {
+    query = query.eq('file_type', fileType);
+  }
+
+  if (fromDate) {
+    query = query.gte('upload_timestamp', format(fromDate, 'yyyy-MM-dd'));
+  }
+
+  if (toDate) {
+    // Add one day to include the end date fully
+    const nextDay = new Date(toDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    query = query.lt('upload_timestamp', format(nextDay, 'yyyy-MM-dd'));
+  }
+
+  // Apply pagination and sorting
+  query = query
     .range(offset, offset + limit - 1)
     .order('upload_timestamp', { ascending: false });
 
+  const { data, error, count } = await query;
+
   if (error) {
     console.error('Error fetching attachments:', error);
-    return [];
+    return { data: [], count: 0 };
   }
 
-  return data as AttachmentData[];
+  return { 
+    data: data as AttachmentData[],
+    count: count || 0
+  };
 }
 
 // Fetch daily attachment metrics within a date range
@@ -204,6 +239,21 @@ export async function fetchUserActivity(limit = 10) {
   }
 
   return data as UserActivity[];
+}
+
+// Fetch all available file types for filtering
+export async function fetchFileTypes() {
+  const { data, error } = await supabase
+    .from('file_type_distribution')
+    .select('file_type')
+    .order('file_type', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching file types:', error);
+    return [];
+  }
+
+  return data.map(item => item.file_type);
 }
 
 // Aggregate data based on time granularity
