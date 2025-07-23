@@ -82,13 +82,13 @@ function App() {
   }, [filteredData, granularity])
 
   return (
-    <div className="min-h-screen p-8 bg-gray-50">
+    <div className="min-h-screen p-8 bg-background">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
+        <h1 className="text-3xl font-bold text-foreground mb-6">
           Analytics Dashboard
         </h1>
         
-        <Card className="p-6 mb-6">
+        <div className="ghost-card mb-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <h2 className="text-xl font-semibold">Startup Check-Ins</h2>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -107,9 +107,9 @@ function App() {
             <LineChart data={aggregatedData} />
           </div>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-md">
-            <h3 className="text-md font-medium text-blue-800 mb-2">Insights</h3>
-            <p className="text-sm text-blue-700">
+          <div className="mt-6 p-4 bg-accent/50 rounded-md backdrop-blur-sm">
+            <h3 className="text-md font-medium text-primary mb-2">Insights</h3>
+            <p className="text-sm text-foreground/80">
               {aggregatedData.length > 0 ? (
                 `There were a total of ${aggregatedData.reduce((sum, item) => sum + item.count, 0)} 
                 check-ins in the selected period. The highest activity was on 
@@ -119,7 +119,7 @@ function App() {
               )}
             </p>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   )
