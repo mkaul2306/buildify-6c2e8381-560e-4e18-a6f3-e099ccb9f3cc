@@ -162,52 +162,47 @@ export function Dashboard() {
             </Card>
           </div>
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-4">Upload Trends</h3>
-              <LineChart 
-                data={uploadData} 
-                xAxisKey="date" 
-                yAxisKey="value" 
-                formatXAxis={formatDate}
-                tooltipFormatter={(value) => value.toLocaleString()}
-              />
-            </Card>
-
+          {/* Charts - Removed Upload Trends and made User Activity full width */}
+          <div className="mb-6">
             <Card className="p-4">
               <h3 className="text-lg font-medium mb-4">User Activity</h3>
-              <LineChart 
-                data={userCountData} 
-                xAxisKey="date" 
-                yAxisKey="value" 
-                formatXAxis={formatDate}
-                tooltipFormatter={(value) => value.toLocaleString()}
-              />
+              <div className="h-[300px]">
+                <LineChart 
+                  data={userCountData} 
+                  xAxisKey="date" 
+                  yAxisKey="value" 
+                  formatXAxis={formatDate}
+                  tooltipFormatter={(value) => value.toLocaleString()}
+                />
+              </div>
             </Card>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card className="p-4">
               <h3 className="text-lg font-medium mb-4">Storage Usage Over Time</h3>
-              <BarChart 
-                data={storageData} 
-                xAxisKey="date" 
-                yAxisKey="value" 
-                formatXAxis={formatDate}
-                tooltipFormatter={(value) => formatBytes(value)}
-              />
+              <div className="h-[300px]">
+                <BarChart 
+                  data={storageData} 
+                  xAxisKey="date" 
+                  yAxisKey="value" 
+                  formatXAxis={formatDate}
+                  tooltipFormatter={(value) => formatBytes(value)}
+                />
+              </div>
             </Card>
 
             <Card className="p-4">
               <h3 className="text-lg font-medium mb-4">File Type Distribution</h3>
-              <PieChart 
-                data={fileTypeData.map(item => ({
-                  name: item.file_type,
-                  value: item.count
-                }))} 
-                tooltipFormatter={(value) => value.toLocaleString()}
-              />
+              <div className="h-[300px]">
+                <PieChart 
+                  data={fileTypeData.map(item => ({
+                    name: item.file_type,
+                    value: item.count
+                  }))} 
+                  tooltipFormatter={(value) => value.toLocaleString()}
+                />
+              </div>
             </Card>
           </div>
         </>
