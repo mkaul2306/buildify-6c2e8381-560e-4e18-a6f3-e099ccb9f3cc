@@ -7,6 +7,7 @@
 - Add an insight summary below the chart highlighting trends
 - Design a clean, modern UI with responsive layout
 - Use Supabase as the backend for data storage and retrieval
+- Add a search feature to filter data by startup name
 
 ### Design
 - Create a React application with a dashboard layout
@@ -17,9 +18,10 @@
   - Dashboard layout
   - Line chart with time filters and date range picker
   - Insight summary
-  - Filter controls (time granularity options and date range picker)
+  - Filter controls (time granularity options, date range picker, and startup name search)
 - Use a clean, minimalist design with good readability
 - Implement data aggregation logic to support different time granularities (daily, monthly, yearly)
+- Add search functionality to filter data by startup name
 
 ### Tasks
 | Task | Description | Model | Token Est. | Status |
@@ -29,4 +31,5 @@
 | Create Dashboard Layout | Build the main dashboard layout and navigation | Claude 3.5 Haiku | 2000 | Completed |
 | Implement Check-In Chart | Create the line chart with time filters | Claude 3.5 Haiku | 2500 | Completed |
 | Add Time Filter Options | Implement Daily/Monthly/Yearly filter options | Claude 3.5 Haiku | 1500 | Completed |
-| Add Date Range Picker | Implement
+| Add Date Range Picker | Implement date range picker for filtering | Claude 3.5 Haiku | 1500 | Completed |
+| Add Startup Name Search | Implement search functionality to filter by startup name | Claude 3.5 Haiku | 1800 | In Progress |
