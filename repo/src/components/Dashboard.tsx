@@ -58,10 +58,10 @@ export function Dashboard() {
         setUserCountData(userChartData);
         setStorageData(storageChartData);
         setFileTypeData(fileTypes);
+        setIsLoading(false);
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
+        console.error('Error fetching data:', err);
         setError('Failed to load dashboard data. Please try again later.');
-      } finally {
         setIsLoading(false);
       }
     }
@@ -69,7 +69,7 @@ export function Dashboard() {
     loadData();
   }, [dateRange, granularity]);
 
-  // Format date range for display
+  // Format date for display
   const formatDateRange = () => {
     if (!dateRange?.from) return 'All time';
     
@@ -84,7 +84,7 @@ export function Dashboard() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Attachment Analytics Dashboard</h1>
         <p className="text-gray-600">
-          Monitoring attachment usage and performance metrics
+          Monitoring user attachment activity and storage metrics
         </p>
       </div>
       
@@ -111,93 +111,89 @@ export function Dashboard() {
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Upload Trend Chart */}
-          <Card className="col-span-1 lg:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">Upload Activity</h2>
-            <p className="text-sm text-gray-500 mb-4">{formatDateRange()}</p>
-            <div className="h-80">
+        <>
+          {/* Top metrics row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <Card className="p-6">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Total Uploads</h3>
+              <p className="text-3xl font-bold">
+                {uploadData.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">{formatDateRange()}</p>
+            </Card>
+            
+            <Card className="p-6">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Active Users</h3>
+              <p className="text-3xl font-bold">
+                {userCountData.length > 0 
+                  ? Math.max(...userCountData.map(d => d.value)).toLocaleString() 
+                  : '0'}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Peak during selected period</p>
+            </Card>
+            
+            <Card className="p-6">
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Storage Used</h3>
+              <p className="text-3xl font-bold">
+                {(storageData.reduce((sum, item) => sum + item.value, 0) / (1024 * 1024)).toFixed(2)} MB
+              </p>
+              <p className="text-sm text-gray-500 mt-1">Total for selected period</p>
+            </Card>
+          </div>
+          
+          {/* Charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <Card className="p-6">
+              <h3 className="text-xl font-medium mb-4">Upload Activity</h3>
               <LineChart 
                 data={uploadData} 
-                xKey="date" 
-                yKey="value" 
-                label="Uploads" 
+                xAxisKey="date" 
+                yAxisKey="value"
+                xAxisLabel="Time Period"
+                yAxisLabel="Number of Uploads"
+                tooltipLabel="Uploads"
               />
-            </div>
-          </Card>
-          
-          {/* User Activity Chart */}
-          <Card>
-            <h2 className="text-xl font-semibold mb-4">Active Users</h2>
-            <div className="h-64">
+            </Card>
+            
+            <Card className="p-6">
+              <h3 className="text-xl font-medium mb-4">User Activity</h3>
               <LineChart 
                 data={userCountData} 
-                xKey="date" 
-                yKey="value" 
-                label="Users" 
+                xAxisKey="date" 
+                yAxisKey="value"
+                xAxisLabel="Time Period"
+                yAxisLabel="Number of Users"
+                tooltipLabel="Active Users"
               />
-            </div>
-          </Card>
+            </Card>
+          </div>
           
-          {/* Storage Usage Chart */}
-          <Card>
-            <h2 className="text-xl font-semibold mb-4">Storage Usage</h2>
-            <div className="h-64">
+          {/* Bottom charts row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card className="p-6">
+              <h3 className="text-xl font-medium mb-4">Storage Usage</h3>
               <BarChart 
                 data={storageData} 
-                xKey="date" 
-                yKey="value" 
-                label="Storage (MB)" 
+                xAxisKey="date" 
+                yAxisKey="value"
+                xAxisLabel="Time Period"
+                yAxisLabel="Storage (KB)"
+                tooltipLabel="Storage Used"
+                valueFormatter={(value) => `${(value / 1024).toFixed(2)} MB`}
               />
-            </div>
-          </Card>
-          
-          {/* File Type Distribution */}
-          <Card>
-            <h2 className="text-xl font-semibold mb-4">File Type Distribution</h2>
-            <div className="h-64">
+            </Card>
+            
+            <Card className="p-6">
+              <h3 className="text-xl font-medium mb-4">File Type Distribution</h3>
               <PieChart 
-                data={fileTypeData.map(item => ({
-                  name: item.file_type,
-                  value: item.count
-                }))} 
+                data={fileTypeData} 
+                nameKey="file_type" 
+                valueKey="count"
+                tooltipLabel="Files"
               />
-            </div>
-          </Card>
-          
-          {/* Key Metrics Summary */}
-          <Card>
-            <h2 className="text-xl font-semibold mb-4">Key Metrics</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Total Uploads</p>
-                <p className="text-2xl font-bold">
-                  {uploadData.reduce((sum, item) => sum + item.value, 0).toLocaleString()}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Active Users</p>
-                <p className="text-2xl font-bold">
-                  {userCountData.length > 0 
-                    ? Math.max(...userCountData.map(d => d.value)).toLocaleString() 
-                    : '0'}
-                </p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">Storage Used</p>
-                <p className="text-2xl font-bold">
-                  {(storageData.reduce((sum, item) => sum + item.value, 0) / 1024).toFixed(2)} GB
-                </p>
-              </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-500">File Types</p>
-                <p className="text-2xl font-bold">
-                  {fileTypeData.length}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
+            </Card>
+          </div>
+        </>
       )}
     </div>
   );
