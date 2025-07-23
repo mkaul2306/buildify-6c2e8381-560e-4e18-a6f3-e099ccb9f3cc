@@ -151,7 +151,7 @@ export async function fetchStartupCheckIns(
   startupId: number,
   fromDate?: Date,
   toDate?: Date
-) {
+): Promise<ChartDataPoint[]> {
   // Get the startup from the search results
   const { data: startups } = await supabase
     .from('StartupCheckIns')
@@ -219,7 +219,8 @@ export async function fetchStartupCheckIns(
     return [];
   }
 
-  console.log('Raw check-in data:', data); // Debug log
+  console.log('Raw check-in data:', data); 
+  console.log('Number of raw check-in records:', data ? data.length : 0);
 
   // Count check-ins by date for the chart
   const checkInsByDate: Record<string, number> = {};
@@ -232,11 +233,18 @@ export async function fetchStartupCheckIns(
     checkInsByDate[date] += 1;
   });
   
-  // Convert to array format for the chart
-  return Object.entries(checkInsByDate).map(([date, count]) => ({
+  // Convert to array format for the chart - IMPORTANT: using 'value' instead of 'count'
+  // to match the expected format for aggregateDataByGranularity
+  const result = Object.entries(checkInsByDate).map(([date, count]) => ({
     date,
-    count
+    value: count // Changed from 'count' to 'value' to match expected format
   }));
+  
+  console.log('Returning check-ins data:', result);
+  console.log('Number of data points:', result.length);
+  console.log('Sample data point:', result.length > 0 ? result[0] : 'No data');
+  
+  return result;
 }
 
 // Fetch attachments with optional filtering
@@ -348,13 +356,20 @@ export function aggregateDataByGranularity(
   }
 
   console.log('Aggregating data with granularity:', granularity);
+  console.log('Value field to use:', valueField);
+  console.log('Number of data points to aggregate:', data.length);
   console.log('Sample data item:', data[0]);
+  console.log('Value field exists in sample?', valueField in data[0]);
 
   if (granularity === 'daily') {
-    return data.map(item => ({
+    // For daily granularity, we just need to ensure the value field is mapped correctly
+    const result = data.map(item => ({
       date: item.date,
       value: item[valueField] || 0
     }));
+    console.log('Daily aggregation result:', result);
+    console.log('Daily aggregation result length:', result.length);
+    return result;
   }
 
   const aggregated: Record<string, number> = {};
@@ -383,13 +398,15 @@ export function aggregateDataByGranularity(
         aggregated[key] = 0;
       }
       
-      aggregated[key] += (item[valueField] || 0);
+      const valueToAdd = item[valueField] || 0;
+      aggregated[key] += valueToAdd;
+      console.log(`Adding ${valueToAdd} to ${key}, new total: ${aggregated[key]}`);
     } catch (err) {
       console.error('Error aggregating data for item:', item, err);
     }
   });
   
-  return Object.entries(aggregated).map(([key, value]) => {
+  const result = Object.entries(aggregated).map(([key, value]) => {
     let formattedDate: string;
     const [year, month] = key.split('-');
     
@@ -404,4 +421,9 @@ export function aggregateDataByGranularity(
       value
     };
   }).sort((a, b) => a.date.localeCompare(b.date));
+  
+  console.log('Aggregation result:', result);
+  console.log('Aggregation result length:', result.length);
+  
+  return result;
 }

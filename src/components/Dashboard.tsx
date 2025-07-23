@@ -82,15 +82,18 @@ export function Dashboard() {
       );
       
       console.log('Fetched check-ins:', checkIns); // Debug log
+      console.log('Number of check-ins fetched:', checkIns.length);
+      console.log('Sample check-in data point:', checkIns.length > 0 ? checkIns[0] : 'No data');
       
       // Aggregate based on selected granularity
       const aggregatedData = aggregateDataByGranularity(
         checkIns,
         granularity,
-        'count'
+        'value'  // Using 'value' as the property name
       );
       
       console.log('Aggregated data:', aggregatedData); // Debug log
+      console.log('Aggregated data length:', aggregatedData.length); // Debug log
       
       setStartupCheckIns(aggregatedData);
       
@@ -214,6 +217,10 @@ export function Dashboard() {
                     formatXAxis={formatDate}
                     tooltipFormatter={(value) => `${value} check-in${value !== 1 ? 's' : ''}`}
                   />
+                  {/* Debug info */}
+                  <div className="mt-2 text-xs text-muted-foreground">
+                    Data points: {startupCheckIns.length}
+                  </div>
                 </div>
                 <div className="mt-4 p-3 bg-muted rounded-md">
                   <h4 className="font-medium mb-1">Insights:</h4>
