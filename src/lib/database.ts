@@ -60,10 +60,12 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
     return [];
   }
 
+  console.log('Searching for startups with term:', searchTerm);
+
   // Get all startup names from StartupCheckIns table
   const { data, error } = await supabase
     .from('StartupCheckIns')
-    .select('StartupName')
+    .select('Id, StartupName')
     .ilike('StartupName', `%${searchTerm}%`)
     .order('StartupName');
 
@@ -72,12 +74,19 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
     return [];
   }
 
-  // Get unique startup names
-  const uniqueStartupNames = Array.from(new Set(data.map(item => item.StartupName)));
+  console.log('Search results:', data);
+
+  // Get unique startup names with their IDs
+  const uniqueStartups = new Map<string, number>();
+  data.forEach(item => {
+    if (!uniqueStartups.has(item.StartupName)) {
+      uniqueStartups.set(item.StartupName, item.Id);
+    }
+  });
   
   // Transform the data to match the Startup interface
-  return uniqueStartupNames.map((name, index) => ({
-    id: index, // Using index as ID since we don't have a real ID
+  return Array.from(uniqueStartups.entries()).map(([name, id]) => ({
+    id: id, // Using the actual ID from the database
     name: name,
     industry: 'N/A', // We don't have this information in StartupCheckIns
     founded_date: new Date().toISOString(), // Placeholder
@@ -91,28 +100,49 @@ export async function fetchStartupCheckIns(
   fromDate?: Date,
   toDate?: Date
 ) {
-  // Since we're using the search results directly, we need to get the startup name
-  // from our searchResults array which is passed via the startupId parameter
-  const { data: startupData } = await supabase
+  // Get the startup from the search results
+  // The startupId parameter is actually the index from the searchResults array
+  // which contains the actual startup name
+  const { data: startups } = await supabase
     .from('StartupCheckIns')
     .select('StartupName')
-    .order('StartupName')
-    .limit(100);
+    .eq('Id', startupId)
+    .limit(1);
   
-  if (!startupData || startupData.length === 0) {
-    console.error('No startups found');
-    return [];
+  // If we can't find the startup by ID, try to use the ID as an index
+  // This is a fallback for the current implementation
+  let startupName: string;
+  
+  if (startups && startups.length > 0) {
+    // If we found the startup by ID, use its name
+    startupName = startups[0].StartupName;
+  } else {
+    console.log('Could not find startup with ID:', startupId);
+    console.log('Trying to use ID as an index into search results...');
+    
+    // This is the fallback approach - get all startups and use the ID as an index
+    const { data: allStartups } = await supabase
+      .from('StartupCheckIns')
+      .select('StartupName')
+      .order('StartupName');
+      
+    if (!allStartups || allStartups.length === 0) {
+      console.error('No startups found');
+      return [];
+    }
+    
+    // Get unique startup names
+    const uniqueStartups = Array.from(new Set(allStartups.map(s => s.StartupName)));
+    
+    if (startupId >= uniqueStartups.length) {
+      console.error('Startup ID out of range:', startupId);
+      return [];
+    }
+    
+    startupName = uniqueStartups[startupId];
   }
   
-  // Get unique startup names
-  const uniqueStartups = Array.from(new Set(startupData.map(s => s.StartupName)));
-  
-  if (startupId >= uniqueStartups.length) {
-    console.error('Startup ID out of range:', startupId);
-    return [];
-  }
-  
-  const startupName = uniqueStartups[startupId];
+  console.log('Fetching check-ins for startup:', startupName);
   
   // Query check-ins for this startup name
   let query = supabase

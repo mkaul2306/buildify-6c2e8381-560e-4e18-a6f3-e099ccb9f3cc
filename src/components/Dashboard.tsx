@@ -47,13 +47,17 @@ export function Dashboard() {
     if (!searchTerm.trim()) return;
     
     setIsSearching(true);
+    setError(null);
     try {
       const results = await searchStartups(searchTerm);
+      console.log('Search results:', results);
       setSearchResults(results);
       
       if (results.length === 1) {
         // Auto-select if only one result
         handleStartupSelect(results[0]);
+      } else if (results.length === 0) {
+        setError(`No startups found matching "${searchTerm}"`);
       }
     } catch (err) {
       console.error('Error searching startups:', err);
@@ -70,6 +74,7 @@ export function Dashboard() {
     setError(null);
     
     try {
+      console.log('Fetching check-ins for startup ID:', startup.id);
       const checkIns = await fetchStartupCheckIns(
         startup.id,
         dateRange?.from,
@@ -106,6 +111,10 @@ export function Dashboard() {
       console.log('Aggregated data:', aggregatedData); // Debug log
       
       setStartupCheckIns(aggregatedData);
+      
+      if (aggregatedData.length === 0) {
+        setError(`No check-in data found for ${startup.name} in the selected date range.`);
+      }
     } catch (err) {
       console.error('Error fetching startup check-ins:', err);
       setError('Failed to load check-in data. Please try again.');
