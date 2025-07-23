@@ -57,7 +57,7 @@ export function Dashboard() {
         // Auto-select if only one result
         handleStartupSelect(results[0]);
       } else if (results.length === 0) {
-        setError(`No startups found matching "${searchTerm}"`);
+        setError(`No startups found matching "${searchTerm}". Please check your spelling and try again.`);
       }
     } catch (err) {
       console.error('Error searching startups:', err);

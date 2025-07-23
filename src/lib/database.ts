@@ -63,6 +63,7 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
   console.log('Searching for startups with term:', searchTerm);
 
   // Get all startup names from StartupCheckIns table
+  // Using ilike for case-insensitive search
   const { data, error } = await supabase
     .from('StartupCheckIns')
     .select('Id, StartupName')
@@ -71,18 +72,30 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
 
   if (error) {
     console.error('Error searching startups:', error);
+    throw new Error(`Database error: ${error.message}`);
+  }
+
+  console.log('Raw search results:', data);
+
+  if (!data || data.length === 0) {
+    console.log('No results found for search term:', searchTerm);
     return [];
   }
 
-  console.log('Search results:', data);
-
   // Get unique startup names with their IDs
   const uniqueStartups = new Map<string, number>();
+  
   data.forEach(item => {
-    if (!uniqueStartups.has(item.StartupName)) {
-      uniqueStartups.set(item.StartupName, item.Id);
+    if (item && item.StartupName) {
+      // Use lowercase comparison for uniqueness check
+      const lowerName = item.StartupName.toLowerCase();
+      if (!Array.from(uniqueStartups.keys()).some(name => name.toLowerCase() === lowerName)) {
+        uniqueStartups.set(item.StartupName, item.Id);
+      }
     }
   });
+  
+  console.log('Unique startups found:', Array.from(uniqueStartups.keys()));
   
   // Transform the data to match the Startup interface
   return Array.from(uniqueStartups.entries()).map(([name, id]) => ({
