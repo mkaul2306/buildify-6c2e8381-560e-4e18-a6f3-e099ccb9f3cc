@@ -62,49 +62,88 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
 
   console.log('Searching for startups with term:', searchTerm);
 
-  // Get all startup names from StartupCheckIns table
-  // Using ilike for case-insensitive search
-  const { data, error } = await supabase
-    .from('StartupCheckIns')
-    .select('Id, StartupName')
-    .ilike('StartupName', `%${searchTerm}%`)
-    .order('StartupName');
+  try {
+    // Get all startup names from StartupCheckIns table
+    // Using ilike for case-insensitive search
+    const { data, error } = await supabase
+      .from('StartupCheckIns')
+      .select('Id, StartupName')
+      .ilike('StartupName', `%${searchTerm}%`)
+      .order('StartupName');
 
-  if (error) {
-    console.error('Error searching startups:', error);
-    throw new Error(`Database error: ${error.message}`);
-  }
+    if (error) {
+      console.error('Error searching startups:', error);
+      throw new Error(`Database error: ${error.message}`);
+    }
 
-  console.log('Raw search results:', data);
+    console.log('Raw search results:', data);
 
-  if (!data || data.length === 0) {
-    console.log('No results found for search term:', searchTerm);
+    if (!data || data.length === 0) {
+      console.log('No results found for search term:', searchTerm);
+      
+      // If no results found, try a more flexible search approach
+      // This is a fallback to handle potential typos or partial matches
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('StartupCheckIns')
+        .select('Id, StartupName')
+        .order('StartupName');
+        
+      if (fallbackError || !fallbackData || fallbackData.length === 0) {
+        return [];
+      }
+      
+      // Find startups that contain any part of the search term or vice versa
+      const fuzzyMatches = fallbackData.filter(item => {
+        if (!item.StartupName) return false;
+        
+        const itemName = item.StartupName.toLowerCase();
+        const search = searchTerm.toLowerCase();
+        
+        // Check if any word in the startup name contains the search term
+        // or if the search term contains any word in the startup name
+        return itemName.includes(search) || 
+               search.includes(itemName) ||
+               itemName.split(' ').some(word => search.includes(word)) ||
+               search.split(' ').some(word => itemName.includes(word));
+      });
+      
+      if (fuzzyMatches.length === 0) {
+        return [];
+      }
+      
+      // Use the fuzzy matches instead
+      console.log('Using fuzzy matches:', fuzzyMatches);
+      data = fuzzyMatches;
+    }
+
+    // Get unique startup names with their IDs
+    const uniqueStartups = new Map<string, number>();
+    
+    data.forEach(item => {
+      if (item && item.StartupName) {
+        // Use lowercase comparison for uniqueness check
+        const lowerName = item.StartupName.toLowerCase();
+        if (!Array.from(uniqueStartups.keys()).some(name => name.toLowerCase() === lowerName)) {
+          uniqueStartups.set(item.StartupName, item.Id);
+        }
+      }
+    });
+    
+    console.log('Unique startups found:', Array.from(uniqueStartups.keys()));
+    
+    // Transform the data to match the Startup interface
+    return Array.from(uniqueStartups.entries()).map(([name, id]) => ({
+      id: id, // Using the actual ID from the database
+      name: name,
+      industry: 'N/A', // We don't have this information in StartupCheckIns
+      founded_date: new Date().toISOString(), // Placeholder
+      created_at: new Date().toISOString() // Placeholder
+    })) as Startup[];
+  } catch (err) {
+    console.error('Unexpected error in searchStartups:', err);
+    // Return an empty array instead of throwing to prevent UI errors
     return [];
   }
-
-  // Get unique startup names with their IDs
-  const uniqueStartups = new Map<string, number>();
-  
-  data.forEach(item => {
-    if (item && item.StartupName) {
-      // Use lowercase comparison for uniqueness check
-      const lowerName = item.StartupName.toLowerCase();
-      if (!Array.from(uniqueStartups.keys()).some(name => name.toLowerCase() === lowerName)) {
-        uniqueStartups.set(item.StartupName, item.Id);
-      }
-    }
-  });
-  
-  console.log('Unique startups found:', Array.from(uniqueStartups.keys()));
-  
-  // Transform the data to match the Startup interface
-  return Array.from(uniqueStartups.entries()).map(([name, id]) => ({
-    id: id, // Using the actual ID from the database
-    name: name,
-    industry: 'N/A', // We don't have this information in StartupCheckIns
-    founded_date: new Date().toISOString(), // Placeholder
-    created_at: new Date().toISOString() // Placeholder
-  })) as Startup[];
 }
 
 // Fetch check-ins for a specific startup
