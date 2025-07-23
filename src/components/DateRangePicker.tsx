@@ -1,28 +1,25 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { cn } from '../lib/utils';
 import { Button } from './ui/Button';
 import { Calendar } from './ui/Calendar';
-import { Popover } from './ui/Popover';
+import { Popover, PopoverContent, PopoverTrigger } from './ui/Popover';
+import { cn } from '../lib/utils';
 
 interface DateRangePickerProps {
   dateRange: DateRange | undefined;
   onDateRangeChange: (range: DateRange | undefined) => void;
-  className?: string;
 }
 
-export function DateRangePicker({
-  dateRange,
-  onDateRangeChange,
-  className,
-}: DateRangePickerProps) {
+export function DateRangePicker({ dateRange, onDateRangeChange }: DateRangePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className={cn("grid gap-2", className)}>
-      <Popover>
-        <Popover.Trigger asChild>
+    <div className="grid gap-2">
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
           <Button
             id="date"
             variant="outline"
@@ -45,17 +42,22 @@ export function DateRangePicker({
               <span>Pick a date range</span>
             )}
           </Button>
-        </Popover.Trigger>
-        <Popover.Content className="w-auto p-0" align="start">
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             initialFocus
             mode="range"
             defaultMonth={dateRange?.from}
             selected={dateRange}
-            onSelect={onDateRangeChange}
+            onSelect={(range) => {
+              onDateRangeChange(range);
+              if (range?.from && range?.to) {
+                setIsOpen(false);
+              }
+            }}
             numberOfMonths={2}
           />
-        </Popover.Content>
+        </PopoverContent>
       </Popover>
     </div>
   );

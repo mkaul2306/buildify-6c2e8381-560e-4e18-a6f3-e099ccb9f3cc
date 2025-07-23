@@ -1,5 +1,5 @@
 
-import React from 'react'
+import React from 'react';
 import {
   LineChart as RechartsLineChart,
   Line,
@@ -8,50 +8,65 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
-} from 'recharts'
-import { format, parseISO } from 'date-fns'
-
-interface DataPoint {
-  date: string
-  count: number
-}
+  Legend,
+} from 'recharts';
 
 interface LineChartProps {
-  data: DataPoint[]
+  data: Array<{ [key: string]: any }>;
+  xAxisKey: string;
+  yAxisKey: string;
+  formatXAxis?: (value: string) => string;
+  tooltipFormatter?: (value: number) => string;
 }
 
-export const LineChart: React.FC<LineChartProps> = ({ data }) => {
+export function LineChart({
+  data,
+  xAxisKey,
+  yAxisKey,
+  formatXAxis = (value) => value,
+  tooltipFormatter = (value) => value.toString(),
+}: LineChartProps) {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border border-border p-2 rounded shadow-md">
+          <p className="font-medium">{formatXAxis(label)}</p>
+          <p className="text-primary">
+            {tooltipFormatter(payload[0].value)}
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <ResponsiveContainer width="100%" height="100%">
       <RechartsLineChart
         data={data}
-        margin={{
-          top: 10,
-          right: 30,
-          left: 0,
-          bottom: 0,
-        }}
+        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
       >
-        <CartesianGrid strokeDasharray="3 3" />
+        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
         <XAxis 
-          dataKey="date" 
-          tickFormatter={(value) => format(parseISO(value), 'MMM d')}
+          dataKey={xAxisKey} 
+          tickFormatter={formatXAxis}
+          tick={{ fontSize: 12 }}
+          tickMargin={10}
         />
-        <YAxis />
-        <Tooltip 
-          labelFormatter={(value) => format(parseISO(value as string), 'MMMM d, yyyy')}
-          formatter={(value) => [value, 'Count']}
+        <YAxis 
+          tick={{ fontSize: 12 }}
+          tickMargin={10}
         />
-        <Legend />
+        <Tooltip content={<CustomTooltip />} />
         <Line
           type="monotone"
-          dataKey="count"
-          stroke="#8884d8"
-          activeDot={{ r: 8 }}
+          dataKey={yAxisKey}
+          stroke="#3b82f6"
           strokeWidth={2}
+          dot={{ r: 4 }}
+          activeDot={{ r: 6 }}
         />
       </RechartsLineChart>
     </ResponsiveContainer>
-  )
+  );
 }

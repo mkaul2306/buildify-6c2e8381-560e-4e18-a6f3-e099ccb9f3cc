@@ -2,22 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from './ui/Card';
 import { LineChart } from './LineChart';
-import { BarChart } from './BarChart';
-import { PieChart } from './PieChart';
 import { TimeGranularityToggle, TimeGranularity } from './TimeGranularityToggle';
 import { DateRangePicker } from './DateRangePicker';
 import { DateRange } from 'react-day-picker';
 import { addDays, format, parseISO, subMonths } from 'date-fns';
 import { 
-  fetchDailyMetrics, 
-  fetchFileTypeDistribution,
   aggregateDataByGranularity, 
   ChartDataPoint,
-  FileTypeDistribution,
   searchStartups,
   Startup,
   fetchStartupCheckIns
 } from '../lib/database';
+import { Input } from './ui/Input';
+import { Button } from './ui/Button';
 
 export function Dashboard() {
   // Time granularity state
@@ -33,50 +30,89 @@ export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Startup[]>([]);
   const [selectedStartup, setSelectedStartup] = useState<Startup | null>(null);
-  const [startupCheckIns, setStartupCheckIns] = useState<any[]>([]);
+  const [startupCheckIns, setStartupCheckIns] = useState<ChartDataPoint[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // Data states
-  const [isLoading, setIsLoading] = useState(true);
-  const [uploadData, setUploadData] = useState<ChartDataPoint[]>([]);
-  const [userCountData, setUserCountData] = useState<ChartDataPoint[]>([]);
-  const [storageData, setStorageData] = useState<ChartDataPoint[]>([]);
-  const [fileTypeData, setFileTypeData] = useState<FileTypeDistribution[]>([]);
+  // Loading state
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch data when date range changes
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const [metrics, fileTypes] = await Promise.all([
-          fetchDailyMetrics(
-            dateRange?.from || undefined,
-            dateRange?.to || undefined
-          ),
-          fetchFileTypeDistribution()
-        ]);
-        
-        // Process data for different charts
-        const uploadChartData = aggregateDataByGranularity(metrics, granularity, 'total_uploads');
-        const userChartData = aggregateDataByGranularity(metrics, granularity, 'unique_users');
-        const storageChartData = aggregateDataByGranularity(metrics, granularity, 'total_size');
-        
-        setUploadData(uploadChartData);
-        setUserCountData(userChartData);
-        setStorageData(storageChartData);
-        setFileTypeData(fileTypes);
-      } catch (err) {
-        console.error('Error loading dashboard data:', err);
-        setError('Failed to load dashboard data. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    }
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  // Handle search submission
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
     
-    loadData();
+    setIsSearching(true);
+    try {
+      const results = await searchStartups(searchTerm);
+      setSearchResults(results);
+      
+      if (results.length === 1) {
+        // Auto-select if only one result
+        handleStartupSelect(results[0]);
+      }
+    } catch (err) {
+      console.error('Error searching startups:', err);
+      setError('Failed to search startups. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Handle startup selection
+  const handleStartupSelect = async (startup: Startup) => {
+    setSelectedStartup(startup);
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const checkIns = await fetchStartupCheckIns(
+        startup.id,
+        dateRange?.from,
+        dateRange?.to
+      );
+      
+      // Transform check-ins data for the chart
+      const checkInCounts = checkIns.reduce((acc: Record<string, number>, checkIn) => {
+        const date = checkIn.date;
+        if (!acc[date]) {
+          acc[date] = 0;
+        }
+        acc[date] += 1;
+        return acc;
+      }, {});
+      
+      // Convert to chart data points
+      const chartData = Object.entries(checkInCounts).map(([date, count]) => ({
+        date,
+        value: count
+      }));
+      
+      // Aggregate based on selected granularity
+      const aggregatedData = aggregateDataByGranularity(
+        chartData.map(item => ({ date: item.date, count: item.value })),
+        granularity,
+        'count'
+      );
+      
+      setStartupCheckIns(aggregatedData);
+    } catch (err) {
+      console.error('Error fetching startup check-ins:', err);
+      setError('Failed to load check-in data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fetch data when date range or granularity changes for selected startup
+  useEffect(() => {
+    if (selectedStartup) {
+      handleStartupSelect(selectedStartup);
+    }
   }, [dateRange, granularity]);
 
   // Format date for display
@@ -91,34 +127,44 @@ export function Dashboard() {
     }
   };
 
-  // Calculate summary metrics
-  const getTotalUploads = () => {
-    return uploadData.reduce((sum, item) => sum + item.value, 0);
-  };
-
-  const getAverageUploadsPerPeriod = () => {
-    if (uploadData.length === 0) return 0;
-    return Math.round(getTotalUploads() / uploadData.length);
-  };
-
-  const getTotalStorage = () => {
-    return storageData.reduce((sum, item) => sum + item.value, 0);
-  };
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   return (
     <div className="space-y-6">
+      {/* Search bar */}
+      <Card className="p-4">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Input
+            placeholder="Search startup by name..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="flex-grow"
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <Button onClick={handleSearch} disabled={isSearching}>
+            {isSearching ? 'Searching...' : 'Search'}
+          </Button>
+        </div>
+        
+        {searchResults.length > 0 && !selectedStartup && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Search Results:</h3>
+            <ul className="space-y-1">
+              {searchResults.map(startup => (
+                <li key={startup.id}>
+                  <button
+                    onClick={() => handleStartupSelect(startup)}
+                    className="text-primary hover:underline text-left w-full py-1"
+                  >
+                    {startup.name} - {startup.industry}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </Card>
+
       {/* Filter controls */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <TimeGranularityToggle 
           value={granularity} 
           onChange={setGranularity} 
@@ -130,92 +176,76 @@ export function Dashboard() {
       </div>
 
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <span className="block sm:inline">{error}</span>
         </div>
       )}
 
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      {/* Selected startup info */}
+      {selectedStartup && (
+        <div className="mb-4">
+          <h2 className="text-xl font-bold flex items-center">
+            {selectedStartup.name}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="ml-2 text-sm" 
+              onClick={() => setSelectedStartup(null)}
+            >
+              (Change)
+            </Button>
+          </h2>
+          <p className="text-muted-foreground">
+            Industry: {selectedStartup.industry} | Founded: {format(parseISO(selectedStartup.founded_date), 'MMMM yyyy')}
+          </p>
         </div>
+      )}
+
+      {/* Check-in chart */}
+      {selectedStartup ? (
+        isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <Card className="p-4">
+            <h3 className="text-lg font-medium mb-4">Check-In History</h3>
+            {startupCheckIns.length > 0 ? (
+              <>
+                <div className="h-[300px]">
+                  <LineChart 
+                    data={startupCheckIns} 
+                    xAxisKey="date" 
+                    yAxisKey="value" 
+                    formatXAxis={formatDate}
+                    tooltipFormatter={(value) => `${value} check-in${value !== 1 ? 's' : ''}`}
+                  />
+                </div>
+                <div className="mt-4 p-3 bg-muted rounded-md">
+                  <h4 className="font-medium mb-1">Insights:</h4>
+                  <p>
+                    {startupCheckIns.length > 0 ? (
+                      `${selectedStartup.name} had a total of ${startupCheckIns.reduce((sum, item) => sum + item.value, 0)} 
+                      check-ins over ${startupCheckIns.length} ${granularity === 'daily' ? 'days' : 
+                      granularity === 'monthly' ? 'months' : 'years'}.`
+                    ) : 'No check-in data available for the selected time period.'}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                No check-in data available for the selected time period.
+              </div>
+            )}
+          </Card>
+        )
       ) : (
-        <>
-          {/* Summary metrics */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-2">Total Uploads</h3>
-              <p className="text-3xl font-bold">{getTotalUploads().toLocaleString()}</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Avg {getAverageUploadsPerPeriod().toLocaleString()} per {granularity.slice(0, -2)}
-              </p>
-            </Card>
-            
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-2">Active Users</h3>
-              <p className="text-3xl font-bold">
-                {userCountData.length > 0 
-                  ? userCountData[userCountData.length - 1].value.toLocaleString() 
-                  : '0'}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Last {granularity === 'daily' ? 'day' : granularity === 'monthly' ? 'month' : 'year'}
-              </p>
-            </Card>
-
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-2">Total Storage</h3>
-              <p className="text-3xl font-bold">{formatBytes(getTotalStorage())}</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Across all uploads
-              </p>
-            </Card>
-          </div>
-
-          {/* Charts - Removed Upload Trends and made User Activity full width */}
-          <div className="mb-6">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-4">User Activity</h3>
-              <div className="h-[300px]">
-                <LineChart 
-                  data={userCountData} 
-                  xAxisKey="date" 
-                  yAxisKey="value" 
-                  formatXAxis={formatDate}
-                  tooltipFormatter={(value) => value.toLocaleString()}
-                />
-              </div>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-4">Storage Usage Over Time</h3>
-              <div className="h-[300px]">
-                <BarChart 
-                  data={storageData} 
-                  xAxisKey="date" 
-                  yAxisKey="value" 
-                  formatXAxis={formatDate}
-                  tooltipFormatter={(value) => formatBytes(value)}
-                />
-              </div>
-            </Card>
-
-            <Card className="p-4">
-              <h3 className="text-lg font-medium mb-4">File Type Distribution</h3>
-              <div className="h-[300px]">
-                <PieChart 
-                  data={fileTypeData.map(item => ({
-                    name: item.file_type,
-                    value: item.count
-                  }))} 
-                  tooltipFormatter={(value) => value.toLocaleString()}
-                />
-              </div>
-            </Card>
-          </div>
-        </>
+        <Card className="p-8 text-center">
+          <h3 className="text-lg font-medium mb-2">No Startup Selected</h3>
+          <p className="text-muted-foreground">
+            Search for a startup above to view their check-in history.
+          </p>
+        </Card>
       )}
     </div>
   );
