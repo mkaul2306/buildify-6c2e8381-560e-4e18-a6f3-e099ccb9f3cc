@@ -55,4 +55,98 @@ export function Dashboard() {
         const storageChartData = aggregateDataByGranularity(metrics, granularity, 'total_size');
         
         setUploadData(uploadChartData);
-        setUser
+        setUserCountData(userChartData);
+        setStorageData(storageChartData);
+        setFileTypeData(fileTypes);
+      } catch (err) {
+        console.error('Error loading dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    loadData();
+  }, [dateRange, granularity]);
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const date = parseISO(dateStr);
+    if (granularity === 'daily') {
+      return format(date, 'MMM d, yyyy');
+    } else if (granularity === 'monthly') {
+      return format(date, 'MMM yyyy');
+    } else {
+      return format(date, 'yyyy');
+    }
+  };
+
+  // Calculate summary metrics
+  const getTotalUploads = () => {
+    return uploadData.reduce((sum, item) => sum + item.value, 0);
+  };
+
+  const getAverageUploadsPerPeriod = () => {
+    if (uploadData.length === 0) return 0;
+    return Math.round(getTotalUploads() / uploadData.length);
+  };
+
+  const getTotalStorage = () => {
+    return storageData.reduce((sum, item) => sum + item.value, 0);
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Filter controls */}
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+        <TimeGranularityToggle 
+          value={granularity} 
+          onChange={setGranularity} 
+        />
+        <DateRangePicker 
+          dateRange={dateRange} 
+          onDateRangeChange={setDateRange} 
+        />
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      ) : (
+        <>
+          {/* Summary metrics */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-2">Total Uploads</h3>
+              <p className="text-3xl font-bold">{getTotalUploads().toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Avg {getAverageUploadsPerPeriod().toLocaleString()} per {granularity.slice(0, -2)}
+              </p>
+            </Card>
+            
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-2">Active Users</h3>
+              <p className="text-3xl font-bold">
+                {userCountData.length > 0 
+                  ? userCountData[userCountData.length - 1].value.toLocaleString() 
+                  : '0'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Last {granularity === 'daily' ? 'day' : granularity === 'monthly
