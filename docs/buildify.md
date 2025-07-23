@@ -1,6 +1,6 @@
 
 ### Requirements
-- Build a dashboard for the Fusen platform using dummy data
+- Build a dashboard for the Fusen platform using existing data from Supabase
 - Create a "Startup Check-Ins" line chart showing number of check-ins over time
 - Include time filters (Daily, Monthly, Yearly) with a date range picker
 - Time filters and date range picker should work together to filter chart data
@@ -8,12 +8,13 @@
 - Design a clean, modern UI with responsive layout
 - Use Supabase as the backend for data storage and retrieval
 - Add a search feature to filter data by startup name
+- Use the existing StartupCheckIns table with StartupName and CheckInTime columns
 
 ### Design
 - Create a React application with a dashboard layout
 - Use Recharts for data visualization
 - Implement a responsive design with Tailwind CSS
-- Set up Supabase tables to store dummy startup check-in data
+- Use existing Supabase StartupCheckIns table for data
 - Create components for:
   - Dashboard layout
   - Line chart with time filters and date range picker
@@ -26,10 +27,16 @@
 ### Tasks
 | Task | Description | Model | Token Est. | Status |
 |------|-------------|-------|------------|--------|
-| Setup Supabase Schema | Create tables for startup check-in data | Claude 3.5 Haiku | 1000 | Completed |
-| Generate Dummy Data | Create seed data for startups and check-ins | Claude 3.5 Haiku | 1500 | Completed |
+| Setup Supabase Connection | Connect to existing Supabase instance | Claude 3.5 Haiku | 1000 | Completed |
 | Create Dashboard Layout | Build the main dashboard layout and navigation | Claude 3.5 Haiku | 2000 | Completed |
 | Implement Check-In Chart | Create the line chart with time filters | Claude 3.5 Haiku | 2500 | Completed |
 | Add Time Filter Options | Implement Daily/Monthly/Yearly filter options | Claude 3.5 Haiku | 1500 | Completed |
 | Add Date Range Picker | Implement date range picker for filtering | Claude 3.5 Haiku | 1500 | Completed |
-| Add Startup Name Search | Implement search functionality to filter by startup name | Claude 3.5 Haiku | 1800 | In Progress |
+| Add Startup Name Search | Implement search functionality to filter by startup name | Claude 3.5 Haiku | 1800 | Completed |
+| Update Database Queries | Modify queries to use StartupCheckIns table | Claude 3.5 Haiku | 2000 | Completed |
+
+### Discussions
+- User requested to use the existing StartupCheckIns table in Supabase instead of creating dummy data
+- Updated database queries to use StartupName and CheckInTime columns from the StartupCheckIns table
+- Implemented search functionality to filter by startup name using the StartupCheckIns table
+- Modified the UI to display startup information based on available data in the StartupCheckIns table

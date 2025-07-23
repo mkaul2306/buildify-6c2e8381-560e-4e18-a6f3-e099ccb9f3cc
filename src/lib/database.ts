@@ -60,19 +60,29 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
     return [];
   }
 
+  // Get all startup names from StartupCheckIns table
   const { data, error } = await supabase
-    .from('startups')
-    .select('*')
-    .ilike('name', `%${searchTerm}%`)
-    .order('name')
-    .limit(10);
+    .from('StartupCheckIns')
+    .select('StartupName')
+    .ilike('StartupName', `%${searchTerm}%`)
+    .order('StartupName');
 
   if (error) {
     console.error('Error searching startups:', error);
     return [];
   }
 
-  return data as Startup[];
+  // Get unique startup names
+  const uniqueStartupNames = Array.from(new Set(data.map(item => item.StartupName)));
+  
+  // Transform the data to match the Startup interface
+  return uniqueStartupNames.map((name, index) => ({
+    id: index, // Using index as ID since we don't have a real ID
+    name: name,
+    industry: 'N/A', // We don't have this information in StartupCheckIns
+    founded_date: new Date().toISOString(), // Placeholder
+    created_at: new Date().toISOString() // Placeholder
+  })) as Startup[];
 }
 
 // Fetch check-ins for a specific startup
@@ -81,18 +91,45 @@ export async function fetchStartupCheckIns(
   fromDate?: Date,
   toDate?: Date
 ) {
+  // Since we're using the search results directly, we need to get the startup name
+  // from our searchResults array which is passed via the startupId parameter
+  const { data: startupData } = await supabase
+    .from('StartupCheckIns')
+    .select('StartupName')
+    .order('StartupName')
+    .limit(100);
+  
+  if (!startupData || startupData.length === 0) {
+    console.error('No startups found');
+    return [];
+  }
+  
+  // Get unique startup names
+  const uniqueStartups = Array.from(new Set(startupData.map(s => s.StartupName)));
+  
+  if (startupId >= uniqueStartups.length) {
+    console.error('Startup ID out of range:', startupId);
+    return [];
+  }
+  
+  const startupName = uniqueStartups[startupId];
+  
+  // Query check-ins for this startup name
   let query = supabase
-    .from('check_ins_view')  // Use the view instead of the table
+    .from('StartupCheckIns')
     .select('*')
-    .eq('startup_id', startupId)
-    .order('check_in_date', { ascending: true });
+    .eq('StartupName', startupName)
+    .order('CheckInTime', { ascending: true });
 
   if (fromDate) {
-    query = query.gte('check_in_date', format(fromDate, 'yyyy-MM-dd'));
+    query = query.gte('CheckInTime', format(fromDate, 'yyyy-MM-dd'));
   }
 
   if (toDate) {
-    query = query.lte('check_in_date', format(toDate, 'yyyy-MM-dd'));
+    // Add one day to include the end date
+    const nextDay = new Date(toDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    query = query.lt('CheckInTime', format(nextDay, 'yyyy-MM-dd'));
   }
 
   const { data, error } = await query;
@@ -104,10 +141,11 @@ export async function fetchStartupCheckIns(
 
   console.log('Raw check-in data:', data); // Debug log
 
+  // Transform the data to the format expected by the chart
   return data.map(item => ({
-    date: item.check_in_date,  // This should now be in YYYY-MM-DD format
-    status: item.status,
-    notes: item.notes
+    date: format(new Date(item.CheckInTime), 'yyyy-MM-dd'),
+    status: item.CheckInType?.toString() || 'Unknown',
+    notes: item.LastWorkedOn || ''
   }));
 }
 

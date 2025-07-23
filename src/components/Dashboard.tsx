@@ -160,7 +160,7 @@ export function Dashboard() {
                     onClick={() => handleStartupSelect(startup)}
                     className="text-primary hover:underline text-left w-full py-1"
                   >
-                    {startup.name} - {startup.industry}
+                    {startup.name}
                   </button>
                 </li>
               ))}
@@ -201,9 +201,6 @@ export function Dashboard() {
               (Change)
             </Button>
           </h2>
-          <p className="text-muted-foreground">
-            Industry: {selectedStartup.industry} | Founded: {format(parseISO(selectedStartup.founded_date), 'MMMM yyyy')}
-          </p>
         </div>
       )}
 
