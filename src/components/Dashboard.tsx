@@ -151,3 +151,67 @@ export function Dashboard() {
               <p className="text-sm text-muted-foreground mt-1">
                 Last {granularity === 'daily' ? 'day' : granularity === 'monthly' ? 'month' : 'year'}
               </p>
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-2">Total Storage</h3>
+              <p className="text-3xl font-bold">{formatBytes(getTotalStorage())}</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Across all uploads
+              </p>
+            </Card>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-4">Upload Trends</h3>
+              <LineChart 
+                data={uploadData} 
+                xAxisKey="date" 
+                yAxisKey="value" 
+                formatXAxis={formatDate}
+                tooltipFormatter={(value) => value.toLocaleString()}
+              />
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-4">User Activity</h3>
+              <LineChart 
+                data={userCountData} 
+                xAxisKey="date" 
+                yAxisKey="value" 
+                formatXAxis={formatDate}
+                tooltipFormatter={(value) => value.toLocaleString()}
+              />
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-4">Storage Usage Over Time</h3>
+              <BarChart 
+                data={storageData} 
+                xAxisKey="date" 
+                yAxisKey="value" 
+                formatXAxis={formatDate}
+                tooltipFormatter={(value) => formatBytes(value)}
+              />
+            </Card>
+
+            <Card className="p-4">
+              <h3 className="text-lg font-medium mb-4">File Type Distribution</h3>
+              <PieChart 
+                data={fileTypeData.map(item => ({
+                  name: item.file_type,
+                  value: item.count
+                }))} 
+                tooltipFormatter={(value) => value.toLocaleString()}
+              />
+            </Card>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
