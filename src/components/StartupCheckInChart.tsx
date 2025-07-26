@@ -138,6 +138,11 @@ export function StartupCheckInChart() {
                 formatXAxis={formatDate}
                 tooltipFormatter={(value) => `${value} check-in${value !== 1 ? 's' : ''}`}
               />
+              {/* Debug info - remove in production */}
+              <div className="text-xs text-gray-500 mt-2">
+                Data points: {chartData.length} | 
+                Sample: {chartData.length > 0 ? JSON.stringify(chartData[0]) : 'No data'}
+              </div>
             </div>
             <div className="mt-4 p-3 bg-muted rounded-md">
               <h4 className="font-medium mb-1">Insights:</h4>
