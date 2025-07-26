@@ -65,7 +65,7 @@ export async function searchStartups(searchTerm: string): Promise<Startup[]> {
   try {
     // Get all startup names from StartupCheckIns table
     // Using ilike for case-insensitive search
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('StartupCheckIns')
       .select('Id, StartupName')
       .ilike('StartupName', `%${searchTerm}%`)
