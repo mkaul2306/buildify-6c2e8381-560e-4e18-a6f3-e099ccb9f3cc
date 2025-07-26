@@ -9,6 +9,7 @@
 - Use Supabase as the backend for data storage and retrieval
 - Add a search feature to filter data by startup name
 - Use the existing StartupCheckIns table with StartupName and CheckInTime columns
+- Add attachment analytics to visualize attachment data (new requirement)
 
 ### Design
 - Create a React application with a dashboard layout
@@ -20,9 +21,11 @@
   - Line chart with time filters and date range picker
   - Insight summary
   - Filter controls (time granularity options, date range picker, and startup name search)
+  - Attachment analytics (new component)
 - Use a clean, minimalist design with good readability
 - Implement data aggregation logic to support different time granularities (daily, monthly, yearly)
 - Add search functionality to filter data by startup name
+- Create visualizations for attachment data including file types, upload status, and user activity
 
 ### Tasks
 | Task | Description | Model | Token Est. | Status |
@@ -34,9 +37,13 @@
 | Add Date Range Picker | Implement date range picker for filtering | Claude 3.5 Haiku | 1500 | Completed |
 | Add Startup Name Search | Implement search functionality to filter by startup name | Claude 3.5 Haiku | 1800 | Completed |
 | Update Database Queries | Modify queries to use StartupCheckIns table | Claude 3.5 Haiku | 2000 | Completed |
+| Add Attachment Analytics | Create visualizations for attachment data | Claude 3.5 Haiku | 3000 | Completed |
 
 ### Discussions
 - User requested to use the existing StartupCheckIns table in Supabase instead of creating dummy data
 - Updated database queries to use StartupName and CheckInTime columns from the StartupCheckIns table
 - Implemented search functionality to filter by startup name using the StartupCheckIns table
 - Modified the UI to display startup information based on available data in the StartupCheckIns table
+- Added attachment analytics to visualize attachment data as per the original purpose of the application
+- Implemented file type distribution visualizations using pie and bar charts
+- Created a tabbed interface to switch between Startup Check-Ins and Attachment Analytics

@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dashboard } from './components/Dashboard';
+import { AttachmentAnalytics } from './components/AttachmentAnalytics';
 import { ThemeProvider } from './components/ui/ThemeProvider';
 import { ThemeToggle } from './components/ui/ThemeToggle';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/Tabs';
 
 function App() {
   return (
@@ -16,7 +18,18 @@ function App() {
             <ThemeToggle />
           </div>
           
-          <Dashboard />
+          <Tabs defaultValue="startup-checkins" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="startup-checkins">Startup Check-Ins</TabsTrigger>
+              <TabsTrigger value="attachments">Attachment Analytics</TabsTrigger>
+            </TabsList>
+            <TabsContent value="startup-checkins">
+              <Dashboard />
+            </TabsContent>
+            <TabsContent value="attachments">
+              <AttachmentAnalytics />
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </ThemeProvider>
