@@ -51,7 +51,7 @@ export interface Startup {
 
 export interface ChartDataPoint {
   date: string;
-  value: number;
+  count: number;
 }
 
 // Fetch startups by name search
@@ -233,11 +233,11 @@ export async function fetchStartupCheckIns(
     checkInsByDate[date] += 1;
   });
   
-  // Convert to array format for the chart - IMPORTANT: using 'value' instead of 'count'
-  // to match the expected format for aggregateDataByGranularity
+  // Convert to array format for the chart - IMPORTANT: using 'count' to match
+  // the expected format in StartupCheckInChart component
   const result = Object.entries(checkInsByDate).map(([date, count]) => ({
     date,
-    value: count // Changed from 'count' to 'value' to match expected format
+    count: count // Using 'count' to match the expected format in StartupCheckInChart
   }));
   
   console.log('Returning check-ins data:', result);
@@ -365,7 +365,7 @@ export function aggregateDataByGranularity(
     // For daily granularity, we just need to ensure the value field is mapped correctly
     const result = data.map(item => ({
       date: item.date,
-      value: item[valueField] || 0
+      count: item[valueField] || 0
     }));
     console.log('Daily aggregation result:', result);
     console.log('Daily aggregation result length:', result.length);
@@ -418,7 +418,7 @@ export function aggregateDataByGranularity(
     
     return {
       date: formattedDate,
-      value
+      count: value
     };
   }).sort((a, b) => a.date.localeCompare(b.date));
   
