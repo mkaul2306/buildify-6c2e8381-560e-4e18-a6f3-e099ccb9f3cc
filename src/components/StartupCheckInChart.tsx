@@ -107,4 +107,67 @@ export function StartupCheckInChart() {
           />
         </div>
         <DateRangePicker 
-          dateRange={dateRange
+          dateRange={dateRange} 
+          onDateRangeChange={setDateRange} 
+        />
+      </div>
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+          <span className="block sm:inline">{error}</span>
+        </div>
+      )}
+
+      {/* Check-in chart */}
+      <Card className="p-4">
+        <h3 className="text-lg font-medium mb-4">
+          {searchQuery ? `Check-Ins for "${searchQuery}"` : 'All Startup Check-Ins'}
+        </h3>
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          </div>
+        ) : chartData.length > 0 ? (
+          <>
+            <div className="h-[300px]">
+              <LineChart 
+                data={chartData} 
+                xAxisKey="date" 
+                yAxisKey="count" 
+                formatXAxis={formatDate}
+                tooltipFormatter={(value) => `${value} check-in${value !== 1 ? 's' : ''}`}
+              />
+            </div>
+            <div className="mt-4 p-3 bg-muted rounded-md">
+              <h4 className="font-medium mb-1">Insights:</h4>
+              <p>
+                {searchQuery ? (
+                  `Startups matching "${searchQuery}" had a total of ${getTotalCheckIns()} 
+                  check-ins over ${chartData.length} ${granularity === 'daily' ? 'days' : 
+                  granularity === 'monthly' ? 'months' : 'years'}.`
+                ) : (
+                  `There were ${getTotalCheckIns()} check-ins from ${getUniqueStartups()} 
+                  unique startups over ${chartData.length} ${granularity === 'daily' ? 'days' : 
+                  granularity === 'monthly' ? 'months' : 'years'}.`
+                )}
+              </p>
+              <p className="mt-2">
+                Average of {getAverageCheckInsPerPeriod()} check-ins per {
+                  granularity === 'daily' ? 'day' : 
+                  granularity === 'monthly' ? 'month' : 'year'
+                }.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            {searchQuery ? 
+              `No check-ins found for startups matching "${searchQuery}" in the selected time period.` : 
+              'No check-in data available for the selected time period.'}
+          </div>
+        )}
+      </Card>
+    </div>
+  );
+}

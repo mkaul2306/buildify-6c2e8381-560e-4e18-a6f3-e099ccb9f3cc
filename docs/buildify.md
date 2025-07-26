@@ -38,6 +38,7 @@
 | Add Startup Name Search | Implement search functionality to filter by startup name | Claude 3.5 Haiku | 1800 | Completed |
 | Update Database Queries | Modify queries to use StartupCheckIns table | Claude 3.5 Haiku | 2000 | Completed |
 | Add Attachment Analytics | Create visualizations for attachment data | Claude 3.5 Haiku | 3000 | Completed |
+| Enhance Startup Search | Improve search to filter graph data by matching startup name in database | Claude 3.5 Haiku | 1500 | Completed |
 
 ### Discussions
 - User requested to use the existing StartupCheckIns table in Supabase instead of creating dummy data
